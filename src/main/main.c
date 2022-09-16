@@ -23,7 +23,10 @@ int main(int argc, char **argv)
 
 
     printf("enter file 1: ");
-    scanf("%s", file1);
+    if (scanf("%s", file1) != 1) {
+        fprintf(stderr, "Bad file name\n");
+		return EXIT_FAILURE;
+    }
 
     if ((fp1 = fopen(file1, GetMode(binary_mod, READ))) == NULL)
 	{
@@ -32,7 +35,10 @@ int main(int argc, char **argv)
 	}
 
     printf("enter file 2: ");
-    scanf("%s", file2);
+    if (scanf("%s", file2) != 1) {
+        fprintf(stderr, "Bad file name\n");
+		return EXIT_FAILURE;
+    }
 
 
     if ((fp2 = fopen(file2, GetMode(binary_mod, READ))) == NULL)
@@ -41,7 +47,12 @@ int main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
-    scanf("%d %d", &size, &length);
+    printf("enter size and length with space:\n");
+    if(scanf("%d %d", &size, &length) != 2) {
+        fprintf(stderr, "Incorrect size and length\n");
+		return EXIT_FAILURE;
+    }
+
     int count = size / length;
     float *result = (float *)calloc(count, sizeof(float));
     clock_t start, end;
