@@ -1,7 +1,8 @@
 #include "input.h"
 #include "file.h"
 
-const char *GetMode(int binary_mod, int isWrite) {
+const char *GetMode(int binary_mod, int isWrite)
+{
     if (binary_mod == BINARY) {
         return isWrite == 1 ? "wb" : "rb";
     }

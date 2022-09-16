@@ -7,7 +7,8 @@
 #include "plain.h"
 
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
     char file1[100];
     char file2[100];
     int size;
