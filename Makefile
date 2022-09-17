@@ -15,5 +15,10 @@ plain.bin:
 test.bin:
 	$(CC) $(CFLAGS) -DBINARY_ONLY -I$(TOPDIR)/include $(TOPDIR)/tests/main.c $(SRCDIR)/plain/plain.c $(SRCDIR)/file/interface.c $(SRCDIR)/file/file_binary.c $(LDFLAGS) -o test.bin
 
+check: all
+	time $(TOPDIR)/gen.bin -s 100 -l 100
+	time $(TOPDIR)/test.bin 10 26214400 100 gen_0100mb_1.txt gen_0100mb_2.txt
+	ls -lah $(TOPDIR)/result.txt
+
 clean:
 	rm -rf *.bin *.txt *.dSYM
