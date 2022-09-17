@@ -34,14 +34,19 @@ int main(int argc, char **argv)
     int count = size / length;
     float *result = (float *)calloc(count, sizeof(float));
     
+
+    // for (int i = 0; i < k; i++) {
+    float *array1 = NULL;
+    float *array2 = NULL;
+    ReadData(BINARY, size, &array1, fp1);
+    ReadData(BINARY, size, &array2, fp2);
     clock_t start, end;
     double cpu_time_used;
     start = clock();
-    for (int i = 0; i < k; i++) {
-        plain(BINARY, fp1, fp2, count, length, result);
-        fseek(fp1, 0, SEEK_SET);
-        fseek(fp2, 0, SEEK_SET);
-    }
+    clean_process(array1, array2, count, length, result);
+        // fseek(fp1, 0, SEEK_SET);
+        // fseek(fp2, 0, SEEK_SET);
+    // }
     end = clock();
 	cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
 	printf("%f sec elapsed\n", cpu_time_used);

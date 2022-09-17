@@ -37,3 +37,10 @@ int plain(int binary_mod, FILE *fp1, FILE *fp2, int count, int length, float *re
     free(array2);
     return 0;
 }
+
+void clean_process(float *array1, float *array2, int count, int length, float *result)
+{
+    for (int k = 0; k < count; k++) {
+        result[k] = process(length, array1 + k*length, array2 + k*length);
+    }
+}

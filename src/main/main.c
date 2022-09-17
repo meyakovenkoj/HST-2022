@@ -55,10 +55,15 @@ int main(int argc, char **argv)
 
     int count = size / length;
     float *result = (float *)calloc(count, sizeof(float));
+    float *array1 = NULL;
+    float *array2 = NULL;
+    ReadData(binary_mod, size, &array1, fp1);
+    ReadData(binary_mod, size, &array2, fp2);
     clock_t start, end;
     double cpu_time_used;
     start = clock();
-    plain(binary_mod, fp1, fp2, count, length, result);
+    clean_process(array1, array2, count, length, result);
+    // plain(binary_mod, fp1, fp2, count, length, result);
     end = clock();
 	cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
 	printf(" %f sec elapsed, %d MBs processed\n", cpu_time_used, size >> 18);
