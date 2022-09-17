@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <getopt.h>
+#include <limits.h>
 #include "input.h"
 
 
@@ -14,6 +15,20 @@ enum BYTE_MOD {
     MEGABYTE
 };
 
+
+unsigned int g_seed = 0x10101010;
+
+
+void gen_rand(float *a, int count)
+{ 
+    unsigned int seed = g_seed;
+    for (int i = 0; i < count; i++)
+    {
+        seed = (214013 * seed + 2531011);
+        a[i] = seed * (1.f / 4294967296ULL);
+    }  
+    g_seed = seed;
+}
 
 
 int main(int argc, char **argv)
@@ -97,12 +112,9 @@ int main(int argc, char **argv)
 		return -1;
 	}
     
-    srand(time(NULL));
     float *array = malloc(length * sizeof(float));
     for (int n = 0; n < real_count; n++) {
-        for (int m = 0; m < length; m++) {
-            array[m] = (float)rand() / (float)(RAND_MAX);
-        }
+        gen_rand(array, length);
         WriteData(binary_mod, length, array, finput);
     }
     printf("Total amount = %zu, line size = %d, row number = %zu\n", real_amount, length, real_count);
@@ -119,13 +131,9 @@ int main(int argc, char **argv)
 		return -1;
 	}
     
-    // srand(time(NULL));
-    srand(12);
     float *array2 = malloc(length * sizeof(float));
     for (int n = 0; n < real_count; n++) {
-        for (int m = 0; m < length; m++) {
-            array2[m] = (float)rand() / (float)(RAND_MAX);
-        }
+        gen_rand(array2, length);
         WriteData(binary_mod, length, array2, finput2);
     }
     printf("Total amount = %zu, line size = %d, row number = %zu\n", real_amount, length, real_count);
