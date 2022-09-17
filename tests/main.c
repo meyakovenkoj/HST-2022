@@ -45,5 +45,13 @@ int main(int argc, char **argv)
     end = clock();
 	cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
 	printf("%f sec elapsed\n", cpu_time_used);
+    const char *outname = "result.txt";
+    FILE *outfp = NULL;
+    if ((outfp = fopen(outname, GetMode(BINARY, WRITE))) == NULL)
+	{
+		fprintf(stderr, "Error opening file\n");
+		return EXIT_FAILURE;
+	}
+    WriteData(BINARY, count, result, outfp);
     return 0;
 }
