@@ -1,5 +1,5 @@
-#include "input.h"
 #include "file.h"
+#include "input.h"
 
 const char *GetMode(int binary_mod, int isWrite)
 {
@@ -16,8 +16,7 @@ int ReadData(int binary_mod, int size, float **array, FILE *fd)
 #else
     if (binary_mod == BINARY) {
         return ReadDataB(size, array, fd);
-    }
-    else {
+    } else {
         return ReadDataH(size, array, fd);
     }
 #endif
@@ -30,8 +29,7 @@ int WriteData(int binary_mod, int size, float *array, FILE *fd)
 #else
     if (binary_mod == BINARY) {
         return WriteDataB(size, array, fd);
-    } 
-    else {
+    } else {
         return WriteDataH(size, array, fd);
     }
 #endif

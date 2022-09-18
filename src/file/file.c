@@ -1,6 +1,6 @@
 #include "input.h"
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 float GetNumber(FILE *fd)
 {
@@ -15,7 +15,7 @@ float GetNumber(FILE *fd)
 int ReadDataH(int size, float **array, FILE *fd)
 {
     float *buffer = NULL;
-    int errorCode = 1; 
+    int errorCode = 1;
     if (size < 1 || !array || !fd) {
         goto done;
     }
@@ -23,7 +23,7 @@ int ReadDataH(int size, float **array, FILE *fd)
     if (!buffer) {
         goto done;
     }
-    
+
     float *tmp = malloc(sizeof(float) * size);
     for (int i = 0; i < size; i++) {
         tmp[i] = GetNumber(fd);

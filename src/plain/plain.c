@@ -1,10 +1,9 @@
-#include <stdio.h>
+#include "plain.h"
+#include "input.h"
 #include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include "input.h"
-#include "plain.h"
-
 
 float multiply(int size, float *first_arr, float *second_arr)
 {
@@ -41,6 +40,6 @@ int plain(int binary_mod, FILE *fp1, FILE *fp2, int count, int length, float *re
 void clean_process(float *array1, float *array2, int count, int length, float *result)
 {
     for (int k = 0; k < count; k++) {
-        result[k] = process(length, array1 + k*length, array2 + k*length);
+        result[k] = process(length, array1 + k * length, array2 + k * length);
     }
 }

@@ -1,11 +1,11 @@
 #include "input.h"
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 int ReadDataB(int size, float **array, FILE *fd)
 {
     float *buffer = NULL;
-    int err = 1; 
+    int err = 1;
     if (size < 1 || !array || !fd) {
         goto err;
     }
@@ -13,7 +13,7 @@ int ReadDataB(int size, float **array, FILE *fd)
     if (!buffer) {
         goto err;
     }
-    
+
     float *tmp = malloc(sizeof(float) * size);
     int res = fread(tmp, sizeof(float), size, fd);
     if (res != size) {

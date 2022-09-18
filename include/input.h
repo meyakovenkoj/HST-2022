@@ -3,13 +3,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
-enum BINARY_MOD {
+enum BINARY_MOD
+{
     BINARY = 0,
     HUMAN
 };
 
-enum WORK_MOD {
+enum WORK_MOD
+{
     READ = 0,
     WRITE
 };
