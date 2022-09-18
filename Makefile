@@ -1,6 +1,6 @@
 CC=gcc
-CFLAGS=-std=c99 -g -Wall -Werror
-LDFLAGS=-lm
+CFLAGS=-std=c99 -O3 -Wall -Werror -Xclang -fopenmp
+LDFLAGS=-lm -lomp
 TOPDIR=.
 SRCDIR=$(TOPDIR)/src
 

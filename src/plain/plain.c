@@ -1,6 +1,7 @@
 #include "plain.h"
 #include "input.h"
 #include <math.h>
+#include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -39,7 +40,11 @@ int plain(int binary_mod, FILE *fp1, FILE *fp2, int count, int length, float *re
 
 void clean_process(float *array1, float *array2, int count, int length, float *result)
 {
-    for (int k = 0; k < count; k++) {
+    int k = 0;
+    omp_set_dynamic(0);
+    omp_set_num_threads(4);
+#pragma omp parallel for shared(array1, array2, result) private(k)
+    for (k = 0; k < count; k++) {
         result[k] = process(length, array1 + k * length, array2 + k * length);
     }
 }
