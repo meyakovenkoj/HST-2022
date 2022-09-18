@@ -63,7 +63,6 @@ int main(int argc, char **argv)
     double cpu_time_used;
     start = clock();
     clean_process(array1, array2, count, length, result);
-    // plain(binary_mod, fp1, fp2, count, length, result);
     end = clock();
 	cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
 	printf(" %f sec elapsed, %d MBs processed\n", cpu_time_used, size >> 18);
