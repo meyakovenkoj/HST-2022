@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <getopt.h>
 #include <time.h>
 #include <mpi.h>
 #include "common.h"
@@ -154,9 +155,9 @@ int main(int argc, char **argv)
     const char *name1 = argv[optind];
     const char *name2 = argv[optind + 1];
 
-    float *array1;
-    float *array2;
-    float *result;
+    float *array1 = NULL;
+    float *array2 = NULL;
+    float *result = NULL;
 
     error_code = get_best_config(&run_config, size, length);
     CHECK_ERROR_CODE(error_code);
