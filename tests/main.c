@@ -16,19 +16,19 @@ int alloc_data(struct RunConfig *run_config)
     run_config->array1 = (float *)calloc(run_config->size, sizeof(float));
     if (!run_config->array1) {
         error_code = EXIT_FAILURE;
-        goto done;
+        CHECK_ERROR_CODE(error_code);
     }
 
     run_config->array2 = (float *)calloc(run_config->size, sizeof(float));
     if (!run_config->array2) {
         error_code = EXIT_FAILURE;
-        goto done;
+        CHECK_ERROR_CODE(error_code);
     }
 
     run_config->result = (float *)calloc(run_config->count, sizeof(float));
     if (!run_config->result) {
         error_code = EXIT_FAILURE;
-        goto done;
+        CHECK_ERROR_CODE(error_code);
     }
 
     error_code = EXIT_SUCCESS;
@@ -53,22 +53,22 @@ int get_best_config(struct RunConfig *run_config, int size, int length)
     run_config->scatter_sizes = (int *)calloc(run_config->config->num_procs, sizeof(int));
     if (!run_config->scatter_sizes) {
         error_code = EXIT_FAILURE;
-        goto done;
+        CHECK_ERROR_CODE(error_code);
     }
     run_config->scatter_offsets = (int *)calloc(run_config->config->num_procs, sizeof(int));
     if (!run_config->scatter_offsets) {
         error_code = EXIT_FAILURE;
-        goto done;
+        CHECK_ERROR_CODE(error_code);
     }
     run_config->gather_counts = (int *)calloc(run_config->config->num_procs, sizeof(int));
     if (!run_config->gather_counts) {
         error_code = EXIT_FAILURE;
-        goto done;
+        CHECK_ERROR_CODE(error_code);
     }
     run_config->gather_offsets = (int *)calloc(run_config->config->num_procs, sizeof(int));
     if (!run_config->gather_offsets) {
         error_code = EXIT_FAILURE;
-        goto done;
+        CHECK_ERROR_CODE(error_code);
     }
 
     int gather_offset = 0;
@@ -100,11 +100,14 @@ done:
 int main(int argc, char **argv)
 {
     int error_code = MPI_ERR_UNKNOWN;
-    error_code = MPI_Init(&argc, &argv);
-    CHECK_ERROR_CODE(error_code);
     struct MpiConfig mpi_config = { 0 };
     struct RunConfig run_config = { 0 };
     run_config.config = &mpi_config;
+    float *array1 = NULL;
+    float *array2 = NULL;
+    float *result = NULL;
+    error_code = MPI_Init(&argc, &argv);
+    CHECK_ERROR_CODE(error_code);
 
     error_code = MPI_Comm_size(MPI_COMM_WORLD, &run_config.config->num_procs);
     CHECK_ERROR_CODE(error_code);
@@ -135,29 +138,25 @@ int main(int argc, char **argv)
             fprintf(stderr, "Usage: %s -s size -l length [-h] filename1 filename2\n",
                     argv[0]);
             error_code = EXIT_FAILURE;
-            goto done;
+            CHECK_ERROR_CODE(error_code);
         }
     }
 
     if (!(sfnd && lfnd)) {
         fprintf(stderr, "Expected size and length options\n");
         error_code = EXIT_FAILURE;
-        goto done;
+        CHECK_ERROR_CODE(error_code);
     }
 
     if (optind != (argc - 2)) {
         fprintf(stderr, "Expected two filenames after options\n");
         error_code = EXIT_FAILURE;
-        goto done;
+        CHECK_ERROR_CODE(error_code);
     }
 
     int vectors_count = size / length;
     const char *name1 = argv[optind];
     const char *name2 = argv[optind + 1];
-
-    float *array1 = NULL;
-    float *array2 = NULL;
-    float *result = NULL;
 
     error_code = get_best_config(&run_config, size, length);
     CHECK_ERROR_CODE(error_code);
@@ -170,18 +169,18 @@ int main(int argc, char **argv)
         if ((fp1 = fopen(name1, GetMode(binary_mod, READ))) == NULL) {
             fprintf(stderr, "Error opening file\n");
             error_code = EXIT_FAILURE;
-            goto done;
+            CHECK_ERROR_CODE(error_code);
         }
 
         if ((fp2 = fopen(name2, GetMode(binary_mod, READ))) == NULL) {
             fprintf(stderr, "Error opening file\n");
             error_code = EXIT_FAILURE;
-            goto done;
+            CHECK_ERROR_CODE(error_code);
         }
         result = (float *)calloc(vectors_count, sizeof(float));
         if (!result) {
             error_code = EXIT_FAILURE;
-            goto done;
+            CHECK_ERROR_CODE(error_code);
         }
         error_code = ReadData(binary_mod, size, &array1, fp1);
         CHECK_ERROR_CODE(error_code);
@@ -221,6 +220,14 @@ int main(int argc, char **argv)
     }
 
 done:
+    free(run_config.array1);
+    free(run_config.array2);
+    free(run_config.result);
+    free(run_config.gather_counts);
+    free(run_config.gather_offsets);
+    free(run_config.scatter_offsets);
+    free(run_config.scatter_sizes);
+    free(result);
     MPI_Finalize();
     return error_code;
 }
