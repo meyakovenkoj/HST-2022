@@ -5,20 +5,16 @@
 #include <stdlib.h>
 #include <time.h>
 
-float multiply(int size, float *first_arr, float *second_arr)
-{
-    float res = 0;
-    for (int i = 0; i < size; i++) {
-        res += first_arr[i] * second_arr[i];
-    }
-    return res;
-}
-
 float process(int size, float *first_arr, float *second_arr)
 {
-    float uv = multiply(size, first_arr, second_arr);
-    float uu = multiply(size, first_arr, first_arr);
-    float vv = multiply(size, second_arr, second_arr);
+    float uv = 0;
+    float uu = 0;
+    float vv = 0;
+    for (int i = 0; i < size; i++) {
+        uv += first_arr[i] * second_arr[i];
+        uu += first_arr[i] * first_arr[i];
+        vv += second_arr[i] * second_arr[i];
+    }
     float cosine = uv / (sqrtf(uu) * sqrtf(vv));
     return cosine;
 }
