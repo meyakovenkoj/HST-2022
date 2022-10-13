@@ -23,7 +23,7 @@ test.bin:
 
 check: all
 	time $(TOPDIR)/gen.bin -s 100 -l 100
-	time $(TOPDIR)/test.bin 26214400 100 gen_0100mb_1.txt gen_0100mb_2.txt
+	time $(TOPDIR)/test.bin -s 26214400 -l 100 gen_0100mb_1.txt gen_0100mb_2.txt
 	ls -lah $(TOPDIR)/result.txt
 
 clean:
