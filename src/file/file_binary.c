@@ -31,5 +31,9 @@ err:
 
 int WriteDataB(int size, float *array, FILE *fd)
 {
-    return fwrite(array, sizeof(float), size, fd);
+    int bytes_wrote = fwrite(array, sizeof(float), size, fd);
+    if (bytes_wrote != size) {
+        return EXIT_FAILURE;
+    }
+    return EXIT_SUCCESS;
 }
