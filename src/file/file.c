@@ -39,7 +39,7 @@ done:
 int WriteDataH(int size, float *array, FILE *fd)
 {
     for (int i = 0; i < size; i++) {
-        fprintf(fd, "%f", array[i]);
+        fprintf(fd, "%.6f", array[i]);
         if (i != size - 1) {
             fprintf(fd, " ");
         }
