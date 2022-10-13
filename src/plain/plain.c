@@ -1,9 +1,12 @@
 #include "plain.h"
 #include "input.h"
+#include <mpi.h>
 #include <math.h>
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include "common.h"
 
 float process(int size, float *first_arr, float *second_arr)
 {

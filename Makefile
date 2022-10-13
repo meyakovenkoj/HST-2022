@@ -1,4 +1,4 @@
-CC=gcc
+CC=mpicc
 CFLAGS=-std=c99 -O2 -Wall -Werror
 LDFLAGS=-lm
 TOPDIR=.
@@ -19,7 +19,7 @@ plain.bin:
 	$(CC) $(CFLAGS) -I$(TOPDIR)/include $(MAIN_C) $(LDFLAGS) -o plain.bin
 
 test.bin:
-	$(CC) $(CFLAGS) -DBINARY_ONLY -I$(TOPDIR)/include $(TEST_C) $(LDFLAGS) -o test.bin
+	$(CC) $(CFLAGS) -I$(TOPDIR)/include $(TEST_C) $(LDFLAGS) -o test.bin
 
 check: all
 	time $(TOPDIR)/gen.bin -s 100 -l 100

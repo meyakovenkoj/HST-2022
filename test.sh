@@ -7,8 +7,8 @@
 ./gen.bin -s 1600 -l 1600
 
 
-./test.bin 26214400 100 gen_0100mb_1.txt gen_0100mb_2.txt
-./test.bin 52428800 200 gen_0200mb_1.txt gen_0200mb_2.txt
-./test.bin 104857600 400 gen_0400mb_1.txt gen_0400mb_2.txt
-./test.bin 209715200 800 gen_0800mb_1.txt gen_0800mb_2.txt
-./test.bin 419430400 1600 gen_1600mb_1.txt gen_1600mb_2.txt
+mpirun ./test.bin -s 26214400 -l 100 gen_0100mb_1.txt gen_0100mb_2.txt
+mpirun ./test.bin -s 52428800 -l 200 gen_0200mb_1.txt gen_0200mb_2.txt
+mpirun ./test.bin -s 104857600 -l 400 gen_0400mb_1.txt gen_0400mb_2.txt
+mpirun ./test.bin -s 209715200 -l 800 gen_0800mb_1.txt gen_0800mb_2.txt
+mpirun ./test.bin -s 419430400 -l 1600 gen_1600mb_1.txt gen_1600mb_2.txt

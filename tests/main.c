@@ -4,49 +4,222 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <time.h>
+#include <mpi.h>
+#include "common.h"
+
+int alloc_data(struct RunConfig *run_config)
+{
+    int error_code = EXIT_FAILURE;
+    run_config->array1 = (float *)calloc(run_config->size, sizeof(float));
+    if (!run_config->array1) {
+        error_code = EXIT_FAILURE;
+        goto done;
+    }
+
+    run_config->array2 = (float *)calloc(run_config->size, sizeof(float));
+    if (!run_config->array2) {
+        error_code = EXIT_FAILURE;
+        goto done;
+    }
+
+    run_config->result = (float *)calloc(run_config->count, sizeof(float));
+    if (!run_config->result) {
+        error_code = EXIT_FAILURE;
+        goto done;
+    }
+
+    error_code = EXIT_SUCCESS;
+done:
+    return error_code;
+}
+
+int get_best_config(struct RunConfig *run_config, int size, int length)
+{
+    int error_code = EXIT_FAILURE;
+    int vectors_count = size / length;
+    run_config->length = length;
+    run_config->count = vectors_count / run_config->config->num_procs;
+    int base_count = run_config->count;
+    int base_size = base_count * run_config->length;
+    int remainder = vectors_count % run_config->config->num_procs;
+    if (run_config->config->proc_id < remainder) {
+        ++run_config->count;
+    }
+    run_config->size = run_config->count * run_config->length;
+
+    run_config->scatter_sizes = (int *)calloc(run_config->config->num_procs, sizeof(int));
+    if (!run_config->scatter_sizes) {
+        error_code = EXIT_FAILURE;
+        goto done;
+    }
+    run_config->scatter_offsets = (int *)calloc(run_config->config->num_procs, sizeof(int));
+    if (!run_config->scatter_offsets) {
+        error_code = EXIT_FAILURE;
+        goto done;
+    }
+    run_config->gather_counts = (int *)calloc(run_config->config->num_procs, sizeof(int));
+    if (!run_config->gather_counts) {
+        error_code = EXIT_FAILURE;
+        goto done;
+    }
+    run_config->gather_offsets = (int *)calloc(run_config->config->num_procs, sizeof(int));
+    if (!run_config->gather_offsets) {
+        error_code = EXIT_FAILURE;
+        goto done;
+    }
+
+    int gather_offset = 0;
+    int scatter_offset = 0;
+    for (int i = 0; i < remainder; ++i) {
+        run_config->scatter_sizes[i] = base_size + run_config->length;
+        run_config->scatter_offsets[i] = scatter_offset;
+        scatter_offset += base_size + run_config->length;
+
+        run_config->gather_counts[i] = base_count + 1;
+        run_config->gather_offsets[i] = gather_offset;
+        gather_offset += base_count + 1;
+    }
+    for (int i = remainder; i < run_config->config->num_procs; ++i) {
+        run_config->scatter_sizes[i] = base_size;
+        run_config->scatter_offsets[i] = scatter_offset;
+        scatter_offset += base_size;
+
+        run_config->gather_counts[i] = base_count;
+        run_config->gather_offsets[i] = gather_offset;
+        gather_offset += base_count;
+    }
+
+    error_code = EXIT_SUCCESS;
+done:
+    return error_code;
+}
 
 int main(int argc, char **argv)
 {
-    if (argc != 5) {
-        fprintf(stderr, "Bad args\n");
-        return EXIT_FAILURE;
-    }
-    int size = atoi(argv[1]);
-    int length = atoi(argv[2]);
-    const char *name1 = argv[3];
-    const char *name2 = argv[4];
-    FILE *fp1, *fp2;
-    if ((fp1 = fopen(name1, GetMode(BINARY, READ))) == NULL) {
-        fprintf(stderr, "Error opening file\n");
-        return EXIT_FAILURE;
+    int error_code = MPI_ERR_UNKNOWN;
+    error_code = MPI_Init(&argc, &argv);
+    CHECK_ERROR_CODE(error_code);
+    struct MpiConfig mpi_config = { 0 };
+    struct RunConfig run_config = { 0 };
+    run_config.config = &mpi_config;
+
+    error_code = MPI_Comm_size(MPI_COMM_WORLD, &run_config.config->num_procs);
+    CHECK_ERROR_CODE(error_code);
+
+    error_code = MPI_Comm_rank(MPI_COMM_WORLD, &run_config.config->proc_id);
+    CHECK_ERROR_CODE(error_code);
+
+    int opt;
+    int sfnd = 0;
+    int lfnd = 0;
+    int size = 0;
+    int length = 0;
+    int binary_mod = BINARY;
+    while ((opt = getopt(argc, argv, "hs:l:")) != -1) {
+        switch (opt) {
+        case 'h':
+            binary_mod = HUMAN;
+            break;
+        case 's':
+            size = atoi(optarg);
+            sfnd = 1;
+            break;
+        case 'l':
+            length = atoi(optarg);
+            lfnd = 1;
+            break;
+        default: /* '?' */
+            fprintf(stderr, "Usage: %s -s size -l length [-h] filename1 filename2\n",
+                    argv[0]);
+            error_code = EXIT_FAILURE;
+            goto done;
+        }
     }
 
-    if ((fp2 = fopen(name2, GetMode(BINARY, READ))) == NULL) {
-        fprintf(stderr, "Error opening file\n");
-        return EXIT_FAILURE;
+    if (!(sfnd && lfnd)) {
+        fprintf(stderr, "Expected size and length options\n");
+        error_code = EXIT_FAILURE;
+        goto done;
     }
 
-    int count = size / length;
-    float *result = (float *)calloc(count, sizeof(float));
-
-    float *array1 = NULL;
-    float *array2 = NULL;
-    ReadData(BINARY, size, &array1, fp1);
-    ReadData(BINARY, size, &array2, fp2);
-    clock_t start, end;
-    double cpu_time_used;
-    start = clock();
-    clean_process(array1, array2, count, length, result);
-    end = clock();
-    cpu_time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
-    printf("%f sec elapsed\n", cpu_time_used);
-    const char *outname = "result.txt";
-    FILE *outfp = NULL;
-    if ((outfp = fopen(outname, GetMode(BINARY, WRITE))) == NULL) {
-        fprintf(stderr, "Error opening file\n");
-        return EXIT_FAILURE;
+    if (optind != (argc - 2)) {
+        fprintf(stderr, "Expected two filenames after options\n");
+        error_code = EXIT_FAILURE;
+        goto done;
     }
-    WriteData(BINARY, count, result, outfp);
-    return 0;
+
+    int vectors_count = size / length;
+    const char *name1 = argv[optind];
+    const char *name2 = argv[optind + 1];
+
+    float *array1;
+    float *array2;
+    float *result;
+
+    error_code = get_best_config(&run_config, size, length);
+    CHECK_ERROR_CODE(error_code);
+
+    error_code = alloc_data(&run_config);
+    CHECK_ERROR_CODE(error_code);
+
+    if (run_config.config->proc_id == 0) {
+        FILE *fp1, *fp2;
+        if ((fp1 = fopen(name1, GetMode(binary_mod, READ))) == NULL) {
+            fprintf(stderr, "Error opening file\n");
+            error_code = EXIT_FAILURE;
+            goto done;
+        }
+
+        if ((fp2 = fopen(name2, GetMode(binary_mod, READ))) == NULL) {
+            fprintf(stderr, "Error opening file\n");
+            error_code = EXIT_FAILURE;
+            goto done;
+        }
+        result = (float *)calloc(vectors_count, sizeof(float));
+        if (!result) {
+            error_code = EXIT_FAILURE;
+            goto done;
+        }
+        error_code = ReadData(binary_mod, size, &array1, fp1);
+        CHECK_ERROR_CODE(error_code);
+        error_code = ReadData(binary_mod, size, &array2, fp2);
+        CHECK_ERROR_CODE(error_code);
+    }
+
+    error_code = MPI_Scatterv(array1, run_config.scatter_sizes, run_config.scatter_offsets, MPI_FLOAT, run_config.array1, run_config.size, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    CHECK_ERROR_CODE(error_code);
+    error_code = MPI_Scatterv(array2, run_config.scatter_sizes, run_config.scatter_offsets, MPI_FLOAT, run_config.array2, run_config.size, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    CHECK_ERROR_CODE(error_code);
+
+    double start_time = MPI_Wtime();
+    clean_process(run_config.array1, run_config.array2, run_config.count, run_config.length, run_config.result);
+    double end_time = MPI_Wtime();
+
+    error_code = MPI_Gatherv(run_config.result, run_config.count, MPI_FLOAT, result, run_config.gather_counts, run_config.gather_offsets, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    CHECK_ERROR_CODE(error_code);
+    
+    double proc_time = end_time - start_time;
+    double elapsed_time;
+
+    error_code = MPI_Reduce(&proc_time, &elapsed_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+    CHECK_ERROR_CODE(error_code);
+
+    if (run_config.config->proc_id == 0) {
+        printf("elapsed time: %lf s\n", elapsed_time);
+        const char *outname = "result.txt";
+        FILE *outfp = NULL;
+        if ((outfp = fopen(outname, GetMode(binary_mod, WRITE))) == NULL) {
+            fprintf(stderr, "Error opening file\n");
+            error_code = EXIT_FAILURE;
+            CHECK_ERROR_CODE(error_code);
+        }
+        error_code = WriteData(binary_mod, vectors_count, result, outfp);
+        CHECK_ERROR_CODE(error_code);
+    }
+
+done:
+    MPI_Finalize();
+    return error_code;
 }
