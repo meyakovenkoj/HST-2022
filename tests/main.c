@@ -8,7 +8,24 @@
 #include <getopt.h>
 #include <time.h>
 #include <mpi.h>
+#include "cuda_process.h"
 #include "common.h"
+
+int get_gpu_size(int index)
+{
+    if (index) {
+        return 0;
+    }
+    return 1000;
+}
+
+int get_gpu_count(int index)
+{
+    if (index) {
+        return 0;
+    }
+    return 1000;
+}
 
 int alloc_data(struct RunConfig *run_config)
 {
@@ -74,22 +91,22 @@ int get_best_config(struct RunConfig *run_config, int size, int length)
     int gather_offset = 0;
     int scatter_offset = 0;
     for (int i = 0; i < remainder; ++i) {
-        run_config->scatter_sizes[i] = base_size + run_config->length;
+        run_config->scatter_sizes[i] = base_size + run_config->length + get_gpu_size(i);
         run_config->scatter_offsets[i] = scatter_offset;
-        scatter_offset += base_size + run_config->length;
+        scatter_offset += base_size + run_config->length + get_gpu_size(i);
 
-        run_config->gather_counts[i] = base_count + 1;
+        run_config->gather_counts[i] = base_count + 1 + get_gpu_count(i);
         run_config->gather_offsets[i] = gather_offset;
-        gather_offset += base_count + 1;
+        gather_offset += base_count + 1 + get_gpu_count(i);
     }
     for (int i = remainder; i < run_config->config->num_procs; ++i) {
-        run_config->scatter_sizes[i] = base_size;
+        run_config->scatter_sizes[i] = base_size + get_gpu_size(i);
         run_config->scatter_offsets[i] = scatter_offset;
-        scatter_offset += base_size;
+        scatter_offset += base_size + get_gpu_size(i);
 
-        run_config->gather_counts[i] = base_count;
+        run_config->gather_counts[i] = base_count + get_gpu_count(i);
         run_config->gather_offsets[i] = gather_offset;
-        gather_offset += base_count;
+        gather_offset += base_count + get_gpu_count(i);
     }
 
     error_code = EXIT_SUCCESS;
@@ -194,7 +211,11 @@ int main(int argc, char **argv)
     CHECK_ERROR_CODE(error_code);
 
     double start_time = MPI_Wtime();
-    clean_process(run_config.array1, run_config.array2, run_config.count, run_config.length, run_config.result);
+    if (run_config.config->proc_id == 0) {
+        gpu_process(run_config.array1, run_config.array2, run_config.count, run_config.length, run_config.result);
+    } else {
+        clean_process(run_config.array1, run_config.array2, run_config.count, run_config.length, run_config.result);
+    }
     double end_time = MPI_Wtime();
 
     error_code = MPI_Gatherv(run_config.result, run_config.count, MPI_FLOAT, result, run_config.gather_counts, run_config.gather_offsets, MPI_FLOAT, 0, MPI_COMM_WORLD);

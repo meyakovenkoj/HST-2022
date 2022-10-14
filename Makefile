@@ -1,5 +1,7 @@
 CC=mpicc
+NVCC=nvcc
 CFLAGS=-std=c99 -O2 -Wall -Werror
+CUFLAGS=
 LDFLAGS=-lm
 TOPDIR=.
 SRCDIR=$(TOPDIR)/src
@@ -19,8 +21,26 @@ gen.bin:
 plain.bin:
 	$(CC) $(CFLAGS) -I$(TOPDIR)/include $(MAIN_C) $(LDFLAGS) -o plain.bin
 
-test.bin:
-	$(CC) $(CFLAGS) -I$(TOPDIR)/include $(TEST_C) $(LDFLAGS) -o test.bin
+interface.o: $(SRCDIR)/file/interface.c
+	$(CC) $(CFLAGS) -I$(TOPDIR)/include -o $@ -c $<
+
+file_binary.o: $(SRCDIR)/file/file_binary.c
+	$(CC) $(CFLAGS) -I$(TOPDIR)/include -o $@ -c $<
+
+file.o: $(SRCDIR)/file/file.c
+	$(CC) $(CFLAGS) -I$(TOPDIR)/include -o $@ -c $<
+
+test.o: $(TOPDIR)/tests/main.c
+	$(CC) $(CFLAGS) -I$(TOPDIR)/include -o $@ -c $<
+
+plain.o: $(SRCDIR)/plain/plain.c
+	$(CC) $(CFLAGS) -I$(TOPDIR)/include -o $@ -c $<
+
+cuda.o: $(SRCDIR)/cuda/process.cu
+	$(NVCC) $(CUFLAGS) -c $<
+
+test.bin: interface.o file.o file_binary.o test.o plain.o
+	$(CC) -I$(TOPDIR)/include $^ $(LDFLAGS) -o test.bin
 
 cuda.bin:
 	nvcc -I$(TOPDIR)/include $(CUDA_C) $(LDFLAGS) -o cuda.bin
@@ -31,4 +51,4 @@ check: all
 	ls -lah $(TOPDIR)/result.txt
 
 clean:
-	rm -rf *.bin *.txt *.dSYM
+	rm -rf *.bin *.txt *.dSYM *.o
