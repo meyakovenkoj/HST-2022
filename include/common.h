@@ -13,4 +13,4 @@ struct MpiConfig
     int proc_id;
 };
 
-#endif // __COMMON_H__
+#endif

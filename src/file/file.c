@@ -23,9 +23,9 @@ int ReadDataH(int size, float **array, FILE *fd)
     if (!buffer) {
         goto done;
     }
-
+    int i = 0;
     float *tmp = malloc(sizeof(float) * size);
-    for (int i = 0; i < size; i++) {
+    for (i = 0; i < size; i++) {
         tmp[i] = GetNumber(fd);
     }
 
@@ -38,7 +38,8 @@ done:
 
 int WriteDataH(int size, float *array, FILE *fd)
 {
-    for (int i = 0; i < size; i++) {
+    int i = 0;
+    for (i = 0; i < size; i++) {
         fprintf(fd, "%.6f", array[i]);
         if (i != size - 1) {
             fprintf(fd, " ");
