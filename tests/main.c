@@ -11,22 +11,6 @@
 #include "cuda_process.h"
 #include "common.h"
 
-int get_gpu_size(int index)
-{
-    if (index) {
-        return 0;
-    }
-    return 1000;
-}
-
-int get_gpu_count(int index)
-{
-    if (index) {
-        return 0;
-    }
-    return 1000;
-}
-
 int alloc_data(struct RunConfig *run_config)
 {
     int error_code = EXIT_FAILURE;
@@ -53,12 +37,13 @@ done:
     return error_code;
 }
 
-int get_best_config(struct RunConfig *run_config, int size, int length)
+int get_best_config(struct RunConfig *run_config, int size, int length, int gpu_util)
 {
     int error_code = EXIT_FAILURE;
     int vectors_count = size / length;
     run_config->length = length;
-    run_config->count = vectors_count / run_config->config->num_procs;
+    int gpu_count = vectors_count * gpu_util / 10; 
+    run_config->count = (vectors_count - gpu_count) / run_config->config->num_procs;
     int base_count = run_config->count;
     int base_size = base_count * run_config->length;
     int remainder = vectors_count % run_config->config->num_procs;
@@ -90,23 +75,27 @@ int get_best_config(struct RunConfig *run_config, int size, int length)
 
     int gather_offset = 0;
     int scatter_offset = 0;
+    if (run_config->config->proc_id != 0) {
+        gpu_count = 0;
+    }
+    int gpu_size = gpu_count * run_config->length;
     for (int i = 0; i < remainder; ++i) {
-        run_config->scatter_sizes[i] = base_size + run_config->length + get_gpu_size(i);
+        run_config->scatter_sizes[i] = base_size + run_config->length + gpu_size;
         run_config->scatter_offsets[i] = scatter_offset;
-        scatter_offset += base_size + run_config->length + get_gpu_size(i);
+        scatter_offset += base_size + run_config->length + gpu_size;
 
-        run_config->gather_counts[i] = base_count + 1 + get_gpu_count(i);
+        run_config->gather_counts[i] = base_count + 1 + gpu_count;
         run_config->gather_offsets[i] = gather_offset;
-        gather_offset += base_count + 1 + get_gpu_count(i);
+        gather_offset += base_count + 1 + gpu_count;
     }
     for (int i = remainder; i < run_config->config->num_procs; ++i) {
-        run_config->scatter_sizes[i] = base_size + get_gpu_size(i);
+        run_config->scatter_sizes[i] = base_size + gpu_size;
         run_config->scatter_offsets[i] = scatter_offset;
-        scatter_offset += base_size + get_gpu_size(i);
+        scatter_offset += base_size + gpu_size;
 
-        run_config->gather_counts[i] = base_count + get_gpu_count(i);
+        run_config->gather_counts[i] = base_count + gpu_count;
         run_config->gather_offsets[i] = gather_offset;
-        gather_offset += base_count + get_gpu_count(i);
+        gather_offset += base_count + gpu_count;
     }
 
     error_code = EXIT_SUCCESS;
@@ -137,11 +126,21 @@ int main(int argc, char **argv)
     int lfnd = 0;
     int size = 0;
     int length = 0;
+    int gpu_util = 5;
     int binary_mod = BINARY;
-    while ((opt = getopt(argc, argv, "hs:l:")) != -1) {
+    while ((opt = getopt(argc, argv, "hg:s:l:")) != -1) {
         switch (opt) {
         case 'h':
             binary_mod = HUMAN;
+            break;
+        case 'g':
+            gpu_util = atoi(optarg);
+            if (gpu_util > 9 || gpu_util < 0) {
+                fprintf(stderr, "GPU util must be in 0..9\n",
+                    argv[0]);
+                error_code = EXIT_FAILURE;
+                CHECK_ERROR_CODE(error_code);
+            }
             break;
         case 's':
             size = atoi(optarg);
@@ -152,7 +151,7 @@ int main(int argc, char **argv)
             lfnd = 1;
             break;
         default: /* '?' */
-            fprintf(stderr, "Usage: %s -s size -l length [-h] filename1 filename2\n",
+            fprintf(stderr, "Usage: %s -s size -l length [-g gpu_util] [-h] filename1 filename2\n",
                     argv[0]);
             error_code = EXIT_FAILURE;
             CHECK_ERROR_CODE(error_code);
@@ -175,7 +174,7 @@ int main(int argc, char **argv)
     const char *name1 = argv[optind];
     const char *name2 = argv[optind + 1];
 
-    error_code = get_best_config(&run_config, size, length);
+    error_code = get_best_config(&run_config, size, length, gpu_util);
     CHECK_ERROR_CODE(error_code);
 
     error_code = alloc_data(&run_config);
