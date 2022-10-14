@@ -6,8 +6,8 @@ __global__ void cosine(const float *array1, const float *array2, int count, int 
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
     int step = gridDim.x * blockDim.x;
     for(int ti = tid; ti < count; ti += step){
-        float first_arr = array1 + ti * length;
-        float second_arr = array2 + ti * length;
+        float *first_arr = array1 + ti * length;
+        float *second_arr = array2 + ti * length;
         float uv = 0;
         float uu = 0;
         float vv = 0;
