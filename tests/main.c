@@ -136,8 +136,7 @@ int main(int argc, char **argv)
         case 'g':
             gpu_util = atoi(optarg);
             if (gpu_util > 9 || gpu_util < 0) {
-                fprintf(stderr, "GPU util must be in 0..9\n",
-                    argv[0]);
+                fprintf(stderr, "GPU util must be in 0..9\n");
                 error_code = EXIT_FAILURE;
                 CHECK_ERROR_CODE(error_code);
             }
