@@ -3,6 +3,7 @@ NVCC=nvcc
 CFLAGS=-std=c99 -O2 -Wall -Werror
 CUFLAGS=
 LDFLAGS=-lm
+CUDALDFLAGS=-L/usr/local/cuda/lib64 -lcudart
 TOPDIR=.
 SRCDIR=$(TOPDIR)/src
 INCLUDE= $(SRCDIR)/include/file.h $(SRCDIR)/include/input.h $(SRCDIR)/include/plain.h
@@ -40,7 +41,7 @@ cuda.o: $(SRCDIR)/cuda/process.cu
 	$(NVCC) $(CUFLAGS) -I$(TOPDIR)/include -o $@ -c $<
 
 test.bin: interface.o file.o file_binary.o test.o plain.o cuda.o
-	$(CC) -I$(TOPDIR)/include $^ $(LDFLAGS) -o test.bin
+	$(CC) -I$(TOPDIR)/include $^ $(LDFLAGS) $(CUDALDFLAGS) -o test.bin
 
 cuda.bin:
 	nvcc -I$(TOPDIR)/include $(CUDA_C) $(LDFLAGS) -o cuda.bin
