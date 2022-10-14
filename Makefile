@@ -37,7 +37,7 @@ plain.o: $(SRCDIR)/plain/plain.c
 	$(CC) $(CFLAGS) -I$(TOPDIR)/include -o $@ -c $<
 
 cuda.o: $(SRCDIR)/cuda/process.cu
-	$(NVCC) $(CUFLAGS) -I$(TOPDIR)/include -c $<
+	$(NVCC) $(CUFLAGS) -I$(TOPDIR)/include -o $@ -c $<
 
 test.bin: interface.o file.o file_binary.o test.o plain.o cuda.o
 	$(CC) -I$(TOPDIR)/include $^ $(LDFLAGS) -o test.bin
