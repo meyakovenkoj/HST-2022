@@ -43,7 +43,8 @@ int get_best_config(struct RunConfig *run_config, int size, int length, int gpu_
     int vectors_count = size / length;
     run_config->length = length;
     int gpu_count = vectors_count * gpu_util / 10; 
-    run_config->count = (vectors_count - gpu_count) / run_config->config->num_procs;
+    vectors_count -= gpu_count;
+    run_config->count = vectors_count / run_config->config->num_procs;
     int base_count = run_config->count;
     int base_size = base_count * run_config->length;
     int remainder = vectors_count % run_config->config->num_procs;
@@ -79,9 +80,6 @@ int get_best_config(struct RunConfig *run_config, int size, int length, int gpu_
 
     int gather_offset = 0;
     int scatter_offset = 0;
-    if (run_config->config->proc_id != 0) {
-        gpu_count = 0;
-    }
     int gpu_size = gpu_count * run_config->length;
     for (int i = 0; i < remainder; ++i) {
         run_config->scatter_sizes[i] = base_size + run_config->length + gpu_size;
@@ -91,6 +89,10 @@ int get_best_config(struct RunConfig *run_config, int size, int length, int gpu_
         run_config->gather_counts[i] = base_count + 1 + gpu_count;
         run_config->gather_offsets[i] = gather_offset;
         gather_offset += base_count + 1 + gpu_count;
+        if (i == 0) {
+            gpu_count = 0;
+            gpu_size = 0;
+        }
     }
     for (int i = remainder; i < run_config->config->num_procs; ++i) {
         run_config->scatter_sizes[i] = base_size + gpu_size;
@@ -100,6 +102,10 @@ int get_best_config(struct RunConfig *run_config, int size, int length, int gpu_
         run_config->gather_counts[i] = base_count + gpu_count;
         run_config->gather_offsets[i] = gather_offset;
         gather_offset += base_count + gpu_count;
+        if (i == 0) {
+            gpu_count = 0;
+            gpu_size = 0;
+        }
     }
 
     error_code = EXIT_SUCCESS;
@@ -205,6 +211,12 @@ int main(int argc, char **argv)
         CHECK_ERROR_CODE(error_code);
         error_code = ReadData(binary_mod, size, &array2, fp2);
         CHECK_ERROR_CODE(error_code);
+    }
+    if (run_config.config->proc_id == 0) {
+        int t = 0;
+        for(t = 0; t < run_config.config->num_procs; t++) {
+            printf("ss=%d so=%d gc=%d go=%d\n", run_config.scatter_sizes[t], run_config.scatter_offsets[t], run_config.gather_counts[t], run_config.gather_offsets[t]); 
+        }
     }
 
     error_code = MPI_Scatterv(array1, run_config.scatter_sizes, run_config.scatter_offsets, MPI_FLOAT, run_config.array1, run_config.size, MPI_FLOAT, 0, MPI_COMM_WORLD);
