@@ -136,12 +136,16 @@ int main(int argc, char **argv)
     int lfnd = 0;
     int size = 0;
     int length = 0;
+    int debug = 0;
     int gpu_util = 5;
     int binary_mod = BINARY;
-    while ((opt = getopt(argc, argv, "hg:s:l:")) != -1) {
+    while ((opt = getopt(argc, argv, "hdg:s:l:")) != -1) {
         switch (opt) {
         case 'h':
             binary_mod = HUMAN;
+            break;
+        case 'd':
+            debug = 1;
             break;
         case 'g':
             gpu_util = atoi(optarg);
@@ -212,7 +216,7 @@ int main(int argc, char **argv)
         error_code = ReadData(binary_mod, size, &array2, fp2);
         CHECK_ERROR_CODE(error_code);
     }
-    if (run_config.config->proc_id == 0) {
+    if (run_config.config->proc_id == 0 && debug) {
         int t = 0;
         for(t = 0; t < run_config.config->num_procs; t++) {
             printf("ss=%d so=%d gc=%d go=%d\n", run_config.scatter_sizes[t], run_config.scatter_offsets[t], run_config.gather_counts[t], run_config.gather_offsets[t]); 
