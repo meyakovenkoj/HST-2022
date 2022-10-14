@@ -29,15 +29,15 @@ void gpu_process(float *array1, float *array2, int count, int length, float *res
     cudaMalloc((void**)&dev_array2, count * length * sizeof(float));
     cudaMalloc((void**)&dev_result, count * sizeof(float));
 
-    cudaMemcpy(dev_array1, array1, count * length * sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_array2, array2, count * length * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(dev_array1, array1, count * length * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(dev_array2, array2, count * length * sizeof(float), cudaMemcpyHostToDevice);
 
     int block_size = length < prop.maxThreadsPerBlock ? length : prop.maxThreadsPerBlock;
     int grid_size = (count + block_size) / block_size;
     cosine<<<grid_size,block_size>>>(dev_array1, dev_array2, count, length, dev_result);
-    cudaDeviceSynchronize();
 
-    cudaMemcpy(result, dev_result, sizeof(float) * count, cudaMemcpyDeviceToHost);
+    cudaMemcpyAsync(result, dev_result, sizeof(float) * count, cudaMemcpyDeviceToHost);
+    cudaDeviceSynchronize();
 
     cudaFree(dev_array1);
     cudaFree(dev_array2);

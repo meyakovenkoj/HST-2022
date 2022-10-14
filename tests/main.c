@@ -184,6 +184,7 @@ int main(int argc, char **argv)
     }
 
     int vectors_count = size / length;
+    int gpu_count = vectors_count * gpu_util / 10; 
     const char *name1 = argv[optind];
     const char *name2 = argv[optind + 1];
 
@@ -230,7 +231,9 @@ int main(int argc, char **argv)
 
     double start_time = MPI_Wtime();
     if (run_config.config->proc_id == 0) {
-        gpu_process(run_config.array1, run_config.array2, run_config.count, run_config.length, run_config.result);
+        int offset = gpu_count * run_config.length;
+        gpu_process(run_config.array1, run_config.array2, gpu_count, run_config.length, run_config.result);
+        clean_process(run_config.array1 + offset, run_config.array2 + offset, run_config.count - gpu_count, run_config.length, run_config.result + gpu_count);
     } else {
         clean_process(run_config.array1, run_config.array2, run_config.count, run_config.length, run_config.result);
     }
