@@ -50,6 +50,10 @@ int get_best_config(struct RunConfig *run_config, int size, int length, int gpu_
     if (run_config->config->proc_id < remainder) {
         ++run_config->count;
     }
+    if (run_config->config->proc_id == 0) {
+        run_config->count += gpu_count;
+    }
+
     run_config->size = run_config->count * run_config->length;
 
     run_config->scatter_sizes = (int *)calloc(run_config->config->num_procs, sizeof(int));
