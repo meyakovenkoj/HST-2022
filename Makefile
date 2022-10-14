@@ -8,6 +8,7 @@ BASE_C= $(SRCDIR)/file/interface.c $(SRCDIR)/file/file_binary.c $(SRCDIR)/file/f
 MAIN_C= $(SRCDIR)/main/main.c $(SRCDIR)/plain/plain.c $(BASE_C)
 TEST_C= $(TOPDIR)/tests/main.c $(SRCDIR)/plain/plain.c $(BASE_C)
 GEN_C= $(SRCDIR)/generator/main.c $(BASE_C)
+CUDA_C= $(SRCDIR)/cuda/main.c $(SRCDIR)/cuda/process.cu $(BASE_C)
 
 
 all: gen.bin plain.bin test.bin
@@ -20,6 +21,9 @@ plain.bin:
 
 test.bin:
 	$(CC) $(CFLAGS) -I$(TOPDIR)/include $(TEST_C) $(LDFLAGS) -o test.bin
+
+cuda.bin:
+	nvcc -I$(TOPDIR)/include $(CUDA_C) $(LDFLAGS) -o cuda.bin
 
 check: all
 	time $(TOPDIR)/gen.bin -s 100 -l 100
