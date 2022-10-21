@@ -122,6 +122,9 @@ int main(int argc, char **argv)
     float *array1 = NULL;
     float *array2 = NULL;
     float *result = NULL;
+    float *dev_array1 = NULL;
+    float *dev_array2 = NULL;
+    float *dev_result = NULL;
     error_code = MPI_Init(&argc, &argv);
     CHECK_ERROR_CODE(error_code);
 
@@ -232,8 +235,9 @@ int main(int argc, char **argv)
     double start_time = MPI_Wtime();
     if (run_config.config->proc_id == 0) {
         int offset = gpu_count * run_config.length;
-        gpu_process(run_config.array1, run_config.array2, gpu_count, run_config.length, run_config.result);
+        gpu_process(run_config.array1, run_config.array2, gpu_count, run_config.length, run_config.result, &dev_array1, &dev_array2, &dev_result);
         clean_process(run_config.array1 + offset, run_config.array2 + offset, run_config.count - gpu_count, run_config.length, run_config.result + gpu_count);
+        gpu_clean_and_sync(dev_array1, dev_array2, dev_result);
     } else {
         clean_process(run_config.array1, run_config.array2, run_config.count, run_config.length, run_config.result);
     }

@@ -70,12 +70,16 @@ int main(int argc, char **argv)
 
     float *array1 = NULL;
     float *array2 = NULL;
+    float *dev_array1 = NULL;
+    float *dev_array2 = NULL;
+    float *dev_result = NULL;
     ReadData(BINARY, size, &array1, fp1);
     ReadData(BINARY, size, &array2, fp2);
     clock_t start, end;
     double cpu_time_used;
     start = clock();
-    gpu_process(array1, array2, count, length, result);
+    gpu_process(array1, array2, count, length, result, &dev_array1, &dev_array2, &dev_result);
+    gpu_clean_and_sync(dev_array1, dev_array2, dev_result);
     end = clock();
     cpu_time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
     printf("%f sec elapsed\n", cpu_time_used);
