@@ -36,11 +36,6 @@ void gpu_process(float *array1, float *array2, int count, int length, float *res
     cosine<<<grid_size,block_size>>>(*dev_array1, *dev_array2, count, length, *dev_result);
 
     cudaMemcpyAsync(result, *dev_result, sizeof(float) * count, cudaMemcpyDeviceToHost);
-    cudaDeviceSynchronize();
-
-    cudaFree(dev_array1);
-    cudaFree(dev_array2);
-    cudaFree(dev_result);
 }
 
 void gpu_clean_and_sync(float *dev_array1, float *dev_array2, float *dev_result)
