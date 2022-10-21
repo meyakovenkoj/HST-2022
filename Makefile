@@ -1,7 +1,7 @@
 CC=mpicc
 NVCC=nvcc
 CFLAGS=-std=c99 -O2 -Wall -Werror
-CUFLAGS=
+CUFLAGS=-O2 --use_fast_math
 LDFLAGS=-lm
 CUDALDFLAGS=-L/usr/local/cuda/lib64 -lcudart
 TOPDIR=.
@@ -12,7 +12,6 @@ MAIN_C= $(SRCDIR)/main/main.c $(SRCDIR)/plain/plain.c $(BASE_C)
 TEST_C= $(TOPDIR)/tests/main.c $(SRCDIR)/plain/plain.c $(BASE_C)
 GEN_C= $(SRCDIR)/generator/main.c $(BASE_C)
 CUDA_C= $(SRCDIR)/cuda/main.c $(SRCDIR)/cuda/process.cu $(BASE_C)
-
 
 all: gen.bin plain.bin test.bin
 
@@ -44,7 +43,7 @@ test.bin: interface.o file.o file_binary.o test.o plain.o cuda.o
 	$(CC) -I$(TOPDIR)/include $^ $(LDFLAGS) $(CUDALDFLAGS) -o test.bin
 
 cuda.bin:
-	nvcc -I$(TOPDIR)/include $(CUDA_C) $(LDFLAGS) -o cuda.bin
+	$(NVCC) -I$(TOPDIR)/include $(CUDA_C) $(LDFLAGS) -o $@
 
 check: all
 	time $(TOPDIR)/gen.bin -s 100 -l 100
