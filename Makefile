@@ -1,7 +1,8 @@
 CC=mpicc
 NVCC=nvcc
-CFLAGS=-std=c99 -O2 -Wall -Werror
-CUFLAGS=-O2 --use_fast_math
+CFLAGS=-std=c99 -g -O2 -Wall -Werror
+CUFLAGS=-O2 -g --use_fast_math -m64
+GENCODE_FLAGS=-gencode arch=compute_35,code=sm_35 -gencode arch=compute_37,code=sm_37 -gencode arch=compute_50,code=sm_50 -gencode arch=compute_52,code=sm_52 -gencode arch=compute_60,code=sm_60 -gencode arch=compute_61,code=sm_61 -gencode arch=compute_70,code=sm_70 -gencode arch=compute_75,code=sm_75 -gencode arch=compute_80,code=sm_80 -gencode arch=compute_86,code=sm_86 -gencode arch=compute_86,code=compute_86
 LDFLAGS=-lm
 CUDALDFLAGS=-L/usr/local/cuda/lib64 -lcudart
 TOPDIR=.
@@ -37,13 +38,13 @@ plain.o: $(SRCDIR)/plain/plain.c
 	$(CC) $(CFLAGS) -I$(TOPDIR)/include -o $@ -c $<
 
 cuda.o: $(SRCDIR)/cuda/process.cu
-	$(NVCC) $(CUFLAGS) -I$(TOPDIR)/include -o $@ -c $<
+	$(NVCC) $(CUFLAGS) -I$(TOPDIR)/include $(GENCODE_FLAGS) -o $@ -c $<
 
 test.bin: interface.o file.o file_binary.o test.o plain.o cuda.o
 	$(CC) -I$(TOPDIR)/include $^ $(LDFLAGS) $(CUDALDFLAGS) -o test.bin
 
 cuda.bin:
-	$(NVCC) -I$(TOPDIR)/include $(CUDA_C) $(LDFLAGS) -o $@
+	$(NVCC) -I$(TOPDIR)/include $(CUDA_C) $(GENCODE_FLAGS) $(LDFLAGS) -o $@
 
 check: all
 	time $(TOPDIR)/gen.bin -s 100 -l 100
